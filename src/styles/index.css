@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --color-navy-950: #0b1524;
+  --color-navy-900: #0f1b2d;
+  --color-navy-800: #172840;
+  --color-navy-700: #22385a;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-slate-100 text-slate-800 antialiased;
+    font-size: 13px;
+    font-feature-settings: "cv11", "ss01";
+  }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
+  input[type="number"]::-webkit-inner-spin-button { opacity: .5; }
+}
+
+@layer components {
+  .input {
+    @apply h-8 w-full rounded-md border border-slate-300 bg-white px-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 disabled:text-slate-500;
+  }
+  .input-error { @apply border-red-400 focus:border-red-500 focus:ring-red-500/20; }
+  .card { @apply rounded-lg border border-slate-200 bg-white; }
+  .th { @apply whitespace-nowrap border-b border-slate-200 bg-slate-50 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500; }
+  .td { @apply whitespace-nowrap border-b border-slate-100 px-3 py-2 text-[13px]; }
+}
+
+/* thin scrollbars for dense views */
+.scroll-thin::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 2px solid #f1f5f9; }
+.scroll-thin::-webkit-scrollbar-track { background: #f1f5f9; }
+
+.hatch {
+  background-image: repeating-linear-gradient(135deg, rgba(100,116,139,.13) 0 4px, transparent 4px 8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}
