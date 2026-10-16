@@ -173,7 +173,7 @@ describe('demo data', () => {
     expect(data.plants.length).toBe(5);
     expect(data.lines.filter((l) => l.status === 'active').length).toBe(8);
     expect(data.orders.length).toBeGreaterThanOrEqual(12);
-    expect(data.orders.length).toBeLessThanOrEqual(20);
+    expect(data.orders.length).toBeLessThanOrEqual(32);
     expect(count((s) => s.status === 'unplanned')).toBeGreaterThan(0);
     expect(count((s) => s.status === 'completed')).toBeGreaterThan(0);
     expect(count((s) => s.status === 'in_production')).toBeGreaterThan(0);

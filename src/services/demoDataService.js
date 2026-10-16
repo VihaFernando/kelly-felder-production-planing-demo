@@ -186,7 +186,7 @@ export function createDemoData(today = todayISO()) {
   let allocSeq = 1;
   activeLines.forEach((line, li) => {
     const lowUtil = line.code === 'YKL-02';
-    const count = lowUtil ? 1 : ['NTM-01', 'K-02-01', 'K-01-01'].includes(line.code) ? 2 : r.int(1, 2);
+    const count = lowUtil ? 1 : ['NTM-01', 'K-02-01', 'K-01-01'].includes(line.code) ? 3 : r.int(2, 3);
     let cursor = addDaysISO(today, -r.int(4, 16));
     if (li < 2) {
       // A finished order before the current one.
@@ -213,7 +213,7 @@ export function createDemoData(today = todayISO()) {
       o.deliveryDate = addDaysISO(p.end, roll < 0.1 ? -3 : roll < 0.2 ? 1 : r.int(7, 21));
       data.allocations.push(a);
       scenario.push({ order: o, alloc: a, kind: a.startDate <= today ? 'running' : 'future' });
-      cursor = addDaysISO(p.end, r.int(1, 5));
+      cursor = addDaysISO(p.end, r.int(1, 3));
     }
   });
 
@@ -224,7 +224,7 @@ export function createDemoData(today = todayISO()) {
     const prev = scenario.filter((s) => s.alloc.lineId === ov[0].alloc.lineId && s.alloc.startDate < ov[0].alloc.startDate).pop();
     if (prev) ov[0].alloc.startDate = addDaysISO(planAllocation(ctx, prev.alloc).end, -2);
   }
-  const sun = futureOnLine('K-02-01')[0];
+  const sun = futureOnLine('K-02-01').at(-1); // last order on the line, so the Sunday start doesn't create a second overlap
   if (sun) {
     let d = sun.alloc.startDate;
     for (let i = 0; i < 7 && fromISO(d).getDay() !== 0; i++) d = addDaysISO(d, 1);

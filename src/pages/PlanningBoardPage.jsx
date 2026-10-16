@@ -11,11 +11,11 @@ import { useAppStore, useCan } from '../store/appStore';
 import { useDerived } from '../hooks/useDerived';
 import { Button, Checkbox, FilterSelect, Menu, SearchInput, cn, Badge } from '../components/common/ui';
 import { confirm } from '../components/common/confirm';
-import { BoardHeader, LineRow, PlantRow } from '../components/planning/BoardGrid';
+import { BoardFiller, BoardHeader, LineRow, PlantRow } from '../components/planning/BoardGrid';
 import { MoveDialog } from '../components/planning/MoveDialog';
 import { DailyAlignDialog } from '../components/planning/DailyAlignDialog';
 import { UnplannedPanel } from '../components/planning/UnplannedPanel';
-import { LEFT_WIDTH, RANGE_PRESETS, TONE_CLASSES, TONE_LABEL, assignLanes, blockTone, spanInRange } from '../components/planning/boardUtils';
+import { LANE_HEIGHT, LANE_HEIGHT_MAX, LEFT_WIDTH, ROW_PAD, RANGE_PRESETS, TONE_CLASSES, TONE_LABEL, assignLanes, blockTone, spanInRange } from '../components/planning/boardUtils';
 import { LineFormModal } from '../components/masterdata/MasterForms';
 import { OrderFormModal } from '../components/orders/OrderFormModal';
 import { planAllocation, dailyAlign } from '../services/schedulingService';
@@ -73,6 +73,14 @@ export default function PlanningBoardPage() {
 
   const scrollRef = useRef(null);
   const originRef = useRef(null);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => setViewportHeight(entry.contentRect.height));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const pointer = useRef({ x: 0, y: 0 });
   const previewKey = useRef('');
 
@@ -130,6 +138,17 @@ export default function PlanningBoardPage() {
     return { blocks: out, lanes };
   }, [analysis, summaries, orderMatches, rangeStart, days.length, ctx, onlyUnplanned]);
 
+  // With few lines, lanes grow (up to LANE_HEIGHT_MAX) so the board fills the screen instead of leaving blank space.
+  const laneHeight = useMemo(() => {
+    const HEADER = 57;
+    const PLANT_ROW = 31;
+    const lineRows = visiblePlants.reduce((n, g) => n + (collapsed.has(g.plant.id) ? 0 : g.lines.length), 0);
+    if (!viewportHeight || !lineRows) return LANE_HEIGHT;
+    const lanes = visiblePlants.reduce((n, g) => n + (collapsed.has(g.plant.id) ? 0 : g.lines.reduce((m, l) => m + (blocksByLine.lanes?.[l.id] || 1), 0)), 0);
+    const free = viewportHeight - HEADER - visiblePlants.length * PLANT_ROW - lineRows * (ROW_PAD * 2 + 1) - 14;
+    return Math.max(LANE_HEIGHT, Math.min(LANE_HEIGHT_MAX, Math.floor(free / lanes)));
+  }, [viewportHeight, visiblePlants, collapsed, blocksByLine]);
+
   const plantTotals = useMemo(() => {
     if (!showSubtotals) return {};
     const inRange = new Set(days);
@@ -186,7 +205,10 @@ export default function PlanningBoardPage() {
     const sc = scrollRef.current;
     if (!sc) return;
     const idx = diffDays(today, rangeStart);
-    if (idx > 0 && idx < days.length && !focusOrderId) sc.scrollLeft = Math.max(0, idx * dayWidth - 160);
+    // Only scroll when today would sit in the right half of the timeline; otherwise keep the range start visible
+    // so bars that began before today still show their labels.
+    const visible = sc.clientWidth - LEFT_WIDTH;
+    if (idx > 0 && idx < days.length && !focusOrderId) sc.scrollLeft = idx * dayWidth > visible / 2 ? Math.max(0, idx * dayWidth - 160) : 0;
   }, [rangeStart, presetId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- Keyboard shortcuts & unload guard ----------
@@ -321,7 +343,9 @@ export default function PlanningBoardPage() {
     setRangeStart(defaultStart(today, preset.days));
     setTimeout(() => {
       const sc = scrollRef.current;
-      if (sc) sc.scrollLeft = Math.max(0, diffDays(today, defaultStart(today, preset.days)) * dayWidth - 160);
+      if (!sc) return;
+      const x = diffDays(today, defaultStart(today, preset.days)) * dayWidth;
+      sc.scrollLeft = x > (sc.clientWidth - LEFT_WIDTH) / 2 ? Math.max(0, x - 160) : 0;
     }, 0);
   };
   const changePreset = (id) => {
@@ -487,9 +511,9 @@ export default function PlanningBoardPage() {
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={onDragStart} onDragMove={onDragMove} onDragOver={onDragMove} onDragEnd={onDragEnd} onDragCancel={endDrag} autoScroll={{ threshold: { x: 0.08, y: 0.12 }, acceleration: 6 }}>
         <div className="flex min-h-0 flex-1">
           <div ref={scrollRef} className="relative min-w-0 flex-1 overflow-auto bg-white scroll-thin" onScroll={() => hover && setHover(null)}>
-            <div className="relative" style={{ width: LEFT_WIDTH + days.length * dayWidth }}>
+            <div className="relative flex min-h-full flex-col" style={{ width: LEFT_WIDTH + days.length * dayWidth }}>
               <BoardHeader days={days} dayWidth={dayWidth} today={today} ctx={ctx} originRef={originRef} />
-              <div className="relative">
+              <div className="relative flex flex-1 flex-col">
                 {todayIdx >= 0 && todayIdx < days.length && <div className="pointer-events-none absolute bottom-0 top-0 z-[8] w-0.5 bg-blue-600/70" style={{ left: LEFT_WIDTH + todayIdx * dayWidth + dayWidth / 2 - 1 }} />}
                 {visiblePlants.map(({ plant, lines }) => {
                   const open = !collapsed.has(plant.id);
@@ -519,6 +543,7 @@ export default function PlanningBoardPage() {
                               today={today}
                               blocks={blocksByLine.blocks?.[line.id] || EMPTY}
                               laneCount={blocksByLine.lanes?.[line.id] || 1}
+                              laneHeight={laneHeight}
                               preview={preview?.lineId === line.id ? preview : null}
                               highlightOrderId={focusOrderId}
                               draggingId={activeDrag?.type === 'alloc' ? activeDrag.allocId : null}
@@ -534,6 +559,7 @@ export default function PlanningBoardPage() {
                   );
                 })}
                 {!visiblePlants.length && <div className="sticky left-0 w-[min(100vw,600px)] p-10 text-center text-sm text-slate-500">No lines match the current filters.</div>}
+                <BoardFiller ctx={ctx} days={days} dayWidth={dayWidth} today={today} />
               </div>
             </div>
           </div>

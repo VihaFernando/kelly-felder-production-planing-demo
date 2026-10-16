@@ -1,7 +1,8 @@
 import { diffDays } from '../../utils/dateUtils';
 
 export const LEFT_WIDTH = 248;
-export const LANE_HEIGHT = 30;
+export const LANE_HEIGHT = 30; // compact lane height (many lines)
+export const LANE_HEIGHT_MAX = 46; // lanes grow up to this when few lines fill the screen
 export const ROW_PAD = 6;
 
 export const RANGE_PRESETS = [

@@ -93,9 +93,9 @@ function dayCellClass(info, isToday) {
   return '';
 }
 
-export const LineRow = memo(function LineRow({ line, rowNo, ctx, days, dayWidth, today, blocks, laneCount, preview, highlightOrderId, draggingId, onBlockClick, onBlockContext, onHover, canPlan }) {
+export const LineRow = memo(function LineRow({ line, rowNo, ctx, days, dayWidth, today, blocks, laneCount, laneHeight = LANE_HEIGHT, preview, highlightOrderId, draggingId, onBlockClick, onBlockContext, onHover, canPlan }) {
   const { setNodeRef, isOver } = useDroppable({ id: `line:${line.id}`, data: { lineId: line.id } });
-  const height = laneCount * LANE_HEIGHT + ROW_PAD * 2;
+  const height = laneCount * laneHeight + ROW_PAD * 2;
   const ops = getOperators(ctx, line, today);
 
   return (
@@ -125,12 +125,12 @@ export const LineRow = memo(function LineRow({ line, rowNo, ctx, days, dayWidth,
           })}
         </div>
         {blocks.map((b) => (
-          <Block key={b.id} b={b} dayWidth={dayWidth} highlighted={highlightOrderId === b.orderId} dragging={draggingId === b.id} onClick={onBlockClick} onContext={onBlockContext} onHover={onHover} canPlan={canPlan} />
+          <Block key={b.id} b={b} dayWidth={dayWidth} laneHeight={laneHeight} highlighted={highlightOrderId === b.orderId} dragging={draggingId === b.id} onClick={onBlockClick} onContext={onBlockContext} onHover={onHover} canPlan={canPlan} />
         ))}
         {preview && (
           <div
             className={cn('pointer-events-none absolute z-10 rounded border-2 border-dashed', preview.invalid ? 'border-red-500 bg-red-500/10' : TONE_CLASSES.blue.ghost)}
-            style={{ left: preview.from * dayWidth + 1, width: Math.max(dayWidth, (preview.to - preview.from + 1) * dayWidth) - 2, top: ROW_PAD, height: LANE_HEIGHT - 4 }}
+            style={{ left: preview.from * dayWidth + 1, width: Math.max(dayWidth, (preview.to - preview.from + 1) * dayWidth) - 2, top: ROW_PAD, height: laneHeight - 4 }}
           >
             <span className={cn('absolute -top-0.5 left-1 whitespace-nowrap text-[10px] font-semibold', preview.invalid ? 'text-red-700' : 'text-blue-800')}>
               {preview.label}
@@ -142,11 +142,12 @@ export const LineRow = memo(function LineRow({ line, rowNo, ctx, days, dayWidth,
   );
 });
 
-const Block = memo(function Block({ b, dayWidth, highlighted, dragging, onClick, onContext, onHover, canPlan }) {
+const Block = memo(function Block({ b, dayWidth, laneHeight, highlighted, dragging, onClick, onContext, onHover, canPlan }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: b.id, data: { type: 'alloc', allocId: b.id }, disabled: !canPlan });
   const t = TONE_CLASSES[b.tone];
   const Icon = TONE_ICON[b.tone];
   const width = (b.to - b.from + 1) * dayWidth - 2;
+  const tall = laneHeight >= 40; // enough height for a two-line label
   return (
     <div
       ref={setNodeRef}
@@ -171,14 +172,41 @@ const Block = memo(function Block({ b, dayWidth, highlighted, dragging, onClick,
         b.conflict && 'outline outline-1 outline-offset-[-1px] outline-red-500',
         'hover:shadow-md',
       )}
-      style={{ left: b.from * dayWidth + 1, width, top: ROW_PAD + b.lane * LANE_HEIGHT, height: LANE_HEIGHT - 4 }}
+      style={{ left: b.from * dayWidth + 1, width, top: ROW_PAD + b.lane * laneHeight, height: laneHeight - 4 }}
     >
       {Icon && width > 40 && <Icon className="h-3 w-3 shrink-0 opacity-80" />}
       {b.locked && <Lock className="h-3 w-3 shrink-0 opacity-70" />}
-      <span className="truncate text-[11px] font-semibold leading-none">{b.poNo}</span>
-      {width > 110 && <span className="truncate text-[10.5px] leading-none opacity-75">{b.styleCode}</span>}
-      {width > 170 && <span className="ml-auto shrink-0 text-[10.5px] tabular-nums leading-none opacity-75">{fmtNum(b.qty)}</span>}
+      {tall ? (
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[11.5px] font-semibold leading-none">{b.poNo}</span>
+            {width > 150 && <span className="ml-auto shrink-0 text-[10.5px] font-medium tabular-nums leading-none opacity-80">{fmtNum(b.qty)} pcs</span>}
+          </span>
+          {width > 70 && <span className="truncate text-[10.5px] leading-none opacity-70">{b.styleCode}{width > 200 && b.statusLabel !== 'Scheduled' ? ` · ${b.statusLabel}` : ''}</span>}
+        </span>
+      ) : (
+        <>
+          <span className="truncate text-[11px] font-semibold leading-none">{b.poNo}</span>
+          {width > 110 && <span className="truncate text-[10.5px] leading-none opacity-75">{b.styleCode}</span>}
+          {width > 170 && <span className="ml-auto shrink-0 text-[10.5px] tabular-nums leading-none opacity-75">{fmtNum(b.qty)}</span>}
+        </>
+      )}
       {b.progress > 0 && <span className={cn('absolute bottom-0 left-0 h-[3px]', t.accent)} style={{ width: `${Math.min(100, b.progress)}%` }} />}
+    </div>
+  );
+});
+
+/** Continues the day grid below the last line so a short board never looks cut off. */
+export const BoardFiller = memo(function BoardFiller({ ctx, days, dayWidth, today }) {
+  const ref = { id: '__filler', plantId: '__none', calendarId: ctx.settings.defaultCalendarId || null };
+  return (
+    <div className="flex min-h-0 flex-1" style={{ width: LEFT_WIDTH + days.length * dayWidth }} aria-hidden="true">
+      <div className="sticky left-0 z-20 shrink-0 border-r border-slate-300 bg-white" style={{ width: LEFT_WIDTH }} />
+      <div className="flex">
+        {days.map((iso) => (
+          <div key={iso} className={cn('h-full shrink-0 border-r border-slate-100', dayCellClass(getDayInfo(ctx, ref, iso), iso === today))} style={{ width: dayWidth }} />
+        ))}
+      </div>
     </div>
   );
 });
