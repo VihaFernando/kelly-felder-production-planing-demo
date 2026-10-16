@@ -170,9 +170,10 @@ describe('demo data', () => {
     const analysis = analyzeAllocations(ctx, data.allocations, data.milestones);
     const sums = Object.values(summarizeOrders(ctx, data.allocations, analysis, data.milestones, data.outputs));
     const count = (fn) => sums.filter(fn).length;
-    expect(data.plants.length).toBeGreaterThanOrEqual(10);
-    expect(data.lines.length).toBeGreaterThanOrEqual(25);
-    expect(data.orders.length).toBeGreaterThanOrEqual(20);
+    expect(data.plants.length).toBe(5);
+    expect(data.lines.filter((l) => l.status === 'active').length).toBe(8);
+    expect(data.orders.length).toBeGreaterThanOrEqual(12);
+    expect(data.orders.length).toBeLessThanOrEqual(20);
     expect(count((s) => s.status === 'unplanned')).toBeGreaterThan(0);
     expect(count((s) => s.status === 'completed')).toBeGreaterThan(0);
     expect(count((s) => s.status === 'in_production')).toBeGreaterThan(0);

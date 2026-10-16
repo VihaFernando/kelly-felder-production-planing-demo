@@ -21,18 +21,11 @@ function rng(seed) {
 }
 
 const PLANTS = [
-  ['K-01', 'Katunayake Plant 1', 'Katunayake EPZ', 3, 'cal-std'],
-  ['K-02', 'Katunayake Plant 2', 'Katunayake EPZ', 3, 'cal-std'],
+  ['K-01', 'Katunayake Plant 1', 'Katunayake EPZ', 2, 'cal-std'],
+  ['K-02', 'Katunayake Plant 2', 'Katunayake EPZ', 2, 'cal-std'],
   ['NTM', 'Nittambuwa', 'Nittambuwa', 3, 'cal-std'],
-  ['NTM-EXT', 'Nittambuwa Extension', 'Nittambuwa', 2, 'cal-std'],
-  ['YKL', 'Yakkala', 'Yakkala', 2, 'cal-std'],
-  ['KDW', 'Kadawatha', 'Kadawatha', 3, 'cal-std'],
-  ['BYG', 'Biyagama', 'Biyagama EPZ', 3, 'cal-6day'],
-  ['MTL', 'Matale', 'Matale', 2, 'cal-5day'],
-  ['KGL', 'Kegalle', 'Kegalle', 2, 'cal-5day'],
-  ['PLN', 'Polonnaruwa', 'Polonnaruwa', 2, 'cal-5day'],
-  ['HRN', 'Horana', 'Horana', 3, 'cal-std'],
-  ['WTL', 'Wattala (closed for refurbishment)', 'Wattala', 2, 'cal-std'],
+  ['YKL', 'Yakkala', 'Yakkala', 2, 'cal-5day'],
+  ['WTL', 'Wattala (closed for refurbishment)', 'Wattala', 1, 'cal-std'],
 ];
 
 // Efficiency ladder: planned efficiency by production day after a style changeover (last level holds).
@@ -47,9 +40,7 @@ const BUYERS = [
   ['NVA', 'Northvale Apparel', 'United Kingdom'],
   ['MLN', 'Maison Lune', 'France'],
   ['HNP', 'Harbor & Pine', 'United States'],
-  ['KST', 'Kestrel Active', 'Australia'],
   ['OST', 'Ostra Basics', 'Germany'],
-  ['FLD', 'Fieldline Outfitters', 'United States'],
 ];
 
 // code, description, buyer index, category, smv, template
@@ -57,19 +48,11 @@ const STYLES = [
   ['NV-DR-2041', 'Wrap midi dress, viscose print', 0, 'Dresses', 24.5, 'tpl-full'],
   ['NV-TP-1180', 'Jersey crew-neck top', 0, 'Tops', 9.8, 'tpl-repeat'],
   ['NV-SK-3302', 'Pleated midi skirt', 0, 'Skirts', 16.2, 'tpl-basic'],
-  ['ML-DR-0912', 'Linen shirt dress', 1, 'Dresses', 28.4, 'tpl-full'],
   ['ML-BL-0455', 'Silk-touch blouse', 1, 'Tops', 18.6, 'tpl-basic'],
   ['HP-SH-7710', 'Oxford button-down shirt', 2, 'Shirts', 21.3, 'tpl-basic'],
   ['HP-TR-7802', 'Chino trouser, slim', 2, 'Trousers', 26.0, 'tpl-basic'],
   ['HP-SH-7725', 'Printed camp-collar shirt', 2, 'Shirts', 22.8, 'tpl-full'],
-  ['KS-TP-5501', 'Performance tank top', 3, 'Tops', 8.4, 'tpl-repeat'],
-  ['KS-TR-5620', 'Jogger pant, brushed', 3, 'Trousers', 19.5, 'tpl-basic'],
-  ['OS-TP-2203', 'Basic long-sleeve tee', 4, 'Tops', 10.6, 'tpl-repeat'],
-  ['OS-DR-2290', 'Jersey T-shirt dress', 4, 'Dresses', 14.9, 'tpl-repeat'],
-  ['OS-SK-2315', 'A-line denim skirt', 4, 'Skirts', 20.7, 'tpl-basic'],
-  ['FL-TR-4410', 'Utility cargo trouser', 5, 'Trousers', 31.5, 'tpl-basic'],
-  ['FL-SH-4402', 'Flannel overshirt', 5, 'Shirts', 27.2, 'tpl-full'],
-  ['ML-SK-0470', 'Satin slip skirt', 1, 'Skirts', 15.4, 'tpl-full'],
+  ['OS-DR-2290', 'Jersey T-shirt dress', 3, 'Dresses', 14.9, 'tpl-repeat'],
 ];
 
 const PEOPLE = [
@@ -122,9 +105,9 @@ export function createDemoData(today = todayISO()) {
       const cats = pi % 4 === 0 ? ['Dresses', 'Tops', 'Skirts'] : pi % 4 === 1 ? ['Shirts', 'Trousers', 'Tops'] : pi % 4 === 2 ? [] : ['Tops', 'Dresses', 'Skirts', 'Trousers'];
       lines.push({
         id: `ln-${lc.toLowerCase()}`, plantId, code: lc, name: `${name.split(' (')[0]} Line ${i}`,
-        status: inactive || lc === 'KDW-03' ? 'inactive' : 'active', calendarId: null,
-        defaultOperators: lc === 'KGL-02' ? 0 : r.int(24, 38),
-        categories: cats, notes: lc === 'KDW-03' ? 'Machines relocated to KDW-01/02.' : '',
+        status: inactive || lc === 'NTM-03' ? 'inactive' : 'active', calendarId: null,
+        defaultOperators: r.int(26, 36),
+        categories: cats, notes: lc === 'NTM-03' ? 'Machines relocated to NTM-01/02.' : '',
       });
     }
   });
@@ -152,22 +135,18 @@ export function createDemoData(today = todayISO()) {
     ex('all', null, 12, 'holiday', 'Poya Day'),
     ex('all', null, 41, 'holiday', 'Poya Day'),
     ex('all', null, 71, 'holiday', 'Poya Day'),
-    ex('all', null, 55, 'holiday', 'Public holiday'),
     ex('plant', 'pl-ntm', 23, 'halfday', 'Plant maintenance', 'sh-half'),
-    ex('plant', 'pl-ykl', 31, 'holiday', 'Local festival'),
-    ex('plant', 'pl-k-02', 9, 'halfday', 'Fire drill & safety training', 'sh-half'),
     ex('line', 'ln-k-01-02', 18, 'holiday', 'Machine overhaul'),
-    ex('plant', 'pl-byg', 26, 'working', 'Extended shift for export peak', 'sh-ot', 600),
   ];
 
-  // Workforce: rolling monthly records. PLN-02 relies on the line default; KGL-02 has none at all.
+  // Workforce: rolling monthly records. YKL-02 has none (line default + warning); NTM-02 is missing later months.
   const workforce = [];
   const t = fromISO(today);
   for (const l of lines) {
-    if (l.status !== 'active' || l.code === 'PLN-02' || l.code === 'KGL-02') continue;
+    if (l.status !== 'active' || l.code === 'YKL-02') continue;
     const base = l.defaultOperators;
     for (let m = -2; m <= 4; m++) {
-      if (l.code === 'HRN-03' && m >= 2) continue;
+      if (l.code === 'NTM-02' && m >= 2) continue;
       const d = new Date(t.getFullYear(), t.getMonth() + m, 1);
       const mos = Math.max(18, base + r.int(-2, 2));
       const helpers = Math.round(mos * 0.28) + r.int(0, 2);
@@ -206,10 +185,10 @@ export function createDemoData(today = todayISO()) {
   const scenario = []; // remembers what each order is meant to demonstrate
   let allocSeq = 1;
   activeLines.forEach((line, li) => {
-    const lowUtil = ['MTL-02', 'PLN-02', 'KGL-02', 'HRN-03'].includes(line.code);
-    const count = lowUtil ? (line.code === 'KGL-02' ? 0 : 1) : r.int(2, 4);
+    const lowUtil = line.code === 'YKL-02';
+    const count = lowUtil ? 1 : ['NTM-01', 'K-02-01', 'K-01-01'].includes(line.code) ? 2 : r.int(1, 2);
     let cursor = addDaysISO(today, -r.int(4, 16));
-    if (li < 6) {
+    if (li < 2) {
       // A finished order before the current one.
       const st = styleFor(line);
       const start = nextWorkingDay(ctx, line, addDaysISO(today, -34 - r.int(0, 4)));
@@ -240,7 +219,7 @@ export function createDemoData(today = todayISO()) {
 
   // Deliberate board issues for Daily Align: one overlap and one Sunday start.
   const futureOnLine = (code) => scenario.filter((s) => s.kind === 'future' && ctx.lines[s.alloc.lineId].code === code);
-  const ov = futureOnLine('NTM-02');
+  const ov = futureOnLine('NTM-01');
   if (ov.length >= 1) {
     const prev = scenario.filter((s) => s.alloc.lineId === ov[0].alloc.lineId && s.alloc.startDate < ov[0].alloc.startDate).pop();
     if (prev) ov[0].alloc.startDate = addDaysISO(planAllocation(ctx, prev.alloc).end, -2);
@@ -252,17 +231,17 @@ export function createDemoData(today = todayISO()) {
     sun.alloc.startDate = d;
   }
   // Partial allocation: only part of the order quantity is planned.
-  const partial = scenario.find((s) => s.kind === 'future' && s.order.qty >= 3000);
+  const partial = scenario.find((s) => s.kind === 'future' && s.order.qty >= 3000 && s !== ov[0] && s !== sun) || scenario.find((s) => s.kind === 'future' && s !== ov[0] && s !== sun);
   if (partial) {
     partial.order.qty += 1800;
     partial.kind = 'partial';
   }
 
   // Unplanned orders straight from the "ERP".
-  const unplannedSpecs = [[2, 2400, 24], [5, 3600, 38], [7, 1800, 19], [9, 5200, 52], [11, 3000, 45], [13, 2600, 33], [0, 4200, 61], [14, 2000, 28]];
+  const unplannedSpecs = [[2, 2400, 24], [5, 3600, 38], [6, 1800, 19], [0, 4200, 45]];
   unplannedSpecs.forEach(([si, qty, del], i) => {
     const o = newOrder(styles[si], qty, addDaysISO(today, del));
-    if (i === 6) o.source = 'Manual';
+    if (i === 3) o.source = 'Manual';
     scenario.push({ order: o, alloc: null, kind: 'unplanned' });
   });
 
@@ -307,8 +286,8 @@ export function createDemoData(today = todayISO()) {
   if (up[2]) setMs(up[2], 'trims', { status: 'pending', actualDate: null, plannedDate: addDaysISO(today, -1) });
 
   // --- Output records from the actual daily plan ---
-  const recorders = ['Upeksha Rajapaksha', 'Line clerk — K-01', 'Line clerk — NTM', 'Line clerk — BYG'];
-  const behindLines = new Set(['ln-ykl-01', 'ln-hrn-02', 'ln-k-02-02']);
+  const recorders = ['Upeksha Rajapaksha', 'Line clerk — K-01', 'Line clerk — NTM', 'Line clerk — YKL'];
+  const behindLines = new Set(['ln-ykl-01', 'ln-k-02-02']);
   let outSeq = 1;
   for (const s of scenario) {
     if (!s.alloc || s.alloc.startDate > today) continue;

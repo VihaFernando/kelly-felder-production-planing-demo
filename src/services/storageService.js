@@ -3,7 +3,7 @@
  * The payload is versioned; incompatible or corrupt data falls back to a fresh demo seed.
  */
 export const STORAGE_KEY = 'kf-ppc-data';
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const REQUIRED_ARRAYS = ['plants', 'lines', 'efficiencyLevels', 'shifts', 'calendars', 'calendarExceptions', 'workforce', 'buyers', 'styles', 'people', 'templates', 'milestoneTypes', 'orders', 'allocations', 'milestones', 'outputs', 'notifications', 'audit'];
 
@@ -16,7 +16,7 @@ function migrate(payload) {
   if (!payload || typeof payload !== 'object') return null;
   const { version, data } = payload;
   if (version === SCHEMA_VERSION) return isValidData(data) ? data : null;
-  // v3 stored leaders; v4 replaced them with the efficiency ladder. Older data cannot be mapped and is reseeded.
+  // v3 stored leaders; v4 introduced the efficiency ladder; v5 ships a smaller demo set. Older data is reseeded.
   return null;
 }
 
